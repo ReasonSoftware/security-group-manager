@@ -1,0 +1,54 @@
+name: build
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Init
+        uses: actions/setup-go@master
+        with:
+          go-version: 1.14
+        id: go
+
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Install Dependencies
+        run: |
+          go get -v -t -d ./...
+          if [ -f Gopkg.toml ]; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+              dep ensure
+          fi
+
+      - name: Lint
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+          golangci-lint run ./...
+
+      - name: Test
+        run: go test -v $(go list ./... | grep -v vendor | grep -v mocks) -race -coverprofile=coverage.txt -covermode=atomic
+
+      - name: Build
+        run: GOOS=linux GOARCH=amd64 go build -o security-group-manager
+
+      - name: Pack
+        run: zip lamdba.zip security-group-manager LICENSE.md serverless.yaml
+
+      - name: Release
+        uses: docker://antonyurchenko/git-release:latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRAFT_RELEASE: "false"
+          PRE_RELEASE: "false"
+          CHANGELOG_FILE: "CHANGELOG.md"
+          ALLOW_EMPTY_CHANGELOG: "false"
+          ALLOW_TAG_PREFIX: "true"
+        with:
+          args: lamdba.zip

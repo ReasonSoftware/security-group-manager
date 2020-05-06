@@ -1,0 +1,43 @@
+service: security-group-manager
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: go1.x
+  timeout: 240
+  memorySize: 128
+
+  stage: prod
+  environment:
+    SECRET: "security-group-manager"
+    DEBUG: "false"
+    LOCAL: "false"
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - secretsmanager:GetSecretValue
+      Resource: ["arn:aws:secretsmanager:*:*:secret:security-group-manager-*"]
+
+    - Effect: "Allow"
+      Action:
+        - ec2:RevokeSecurityGroupIngress
+        - ec2:AuthorizeSecurityGroupIngress
+        - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+      Resource: ["arn:aws:ec2:*:*:security-group/*"]
+    - Effect: "Allow"
+      Action:
+        - ec2:DescribeSecurityGroups
+      Resource: ["*"]
+
+functions:
+  app:
+    handler: security-group-manager
+    events:
+      - schedule: cron(0/30 * * * ? *)
+
+package:
+  exclude:
+    - ./**
+  include:
+    - ./security-group-manager
