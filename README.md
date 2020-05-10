@@ -1,5 +1,6 @@
 # security-group-manager
 [![Release](https://img.shields.io/github/v/release/ReasonSoftware/security-group-manager)](https://github.com/ReasonSoftware/security-group-manager/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ReasonSoftware/security-group-manager)](https://goreportcard.com/report/github.com/ReasonSoftware/security-group-manager)
 [![Build](https://github.com/ReasonSoftware/security-group-manager/workflows/build/badge.svg)](https://github.com/ReasonSoftware/security-group-manager/actions)
 [![License](https://img.shields.io/github/license/ReasonSoftware/security-group-manager)](LICENSE.md)
 
