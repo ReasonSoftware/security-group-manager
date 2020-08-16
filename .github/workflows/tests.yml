@@ -29,8 +29,9 @@ jobs:
       - name: Lint
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
-          go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-          golangci-lint run ./...
+          curl -s https://api.github.com/repos/golangci/golangci-lint/releases/latest | grep browser_download_url | grep linux-amd64 | cut -d : -f 2,3 | tr -d \" | wget -i -
+          tar -xvf golangci-lint-*-linux-amd64.tar.gz --strip=1 --no-anchored golangci-lint
+          ./golangci-lint run ./...
 
       - name: Test
         run: go test -v $(go list ./... | grep -v vendor | grep -v mocks) -race -coverprofile=coverage.txt -covermode=atomic
