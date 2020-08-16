@@ -16,6 +16,10 @@ An AWS **Lambda** to maintain whitelist rules on **Security Groups**.
 - Mix multiple protocols on a security group.
 - Define your own custom protocols.
 
+## Manual
+
+Tag a security group with `<protocol-name>=managed` that matches of the protocols from a configuration.
+
 ## Install
 
 1. Download [latest release](https://github.com/ReasonSoftware/security-group-manager/releases/latest) and extract the archive
