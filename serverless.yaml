@@ -9,7 +9,7 @@ provider:
 
   stage: prod
   environment:
-    SECRET: "security-group-manager"
+    SECRET: "whitelist"
     DEBUG: "false"
     LOCAL: "false"
 
@@ -17,7 +17,7 @@ provider:
     - Effect: "Allow"
       Action:
         - secretsmanager:GetSecretValue
-      Resource: ["arn:aws:secretsmanager:*:*:secret:security-group-manager-*"]
+      Resource: ["arn:aws:secretsmanager:*:*:secret:whitelist-*"]
 
     - Effect: "Allow"
       Action:
