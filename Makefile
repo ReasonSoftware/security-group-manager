@@ -22,7 +22,7 @@ init:
 	@rm -f go.mod
 	@rm -f go.sum
 	@rm -rf ./vendor
-	@go mod init
+	@go mod init $$(pwd | awk -F'/' '{print "github.com/"$$(NF-1)"/"$$NF}')
 
 # linter
 GO_LINTER := $(GO_BIN_DIR)/golangci-lint
@@ -35,6 +35,7 @@ release: test
 	@rm -f ./$(BINARY)
 	@mkdir -p release
 	@GOOS=linux GOARCH=amd64 go build -o $(BINARY)
+	serverless deploy --stage prod
 
 .PHONY: codecov
 codecov: test

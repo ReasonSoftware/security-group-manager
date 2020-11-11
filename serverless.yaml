@@ -25,6 +25,7 @@ provider:
         - ec2:AuthorizeSecurityGroupIngress
         - ec2:UpdateSecurityGroupRuleDescriptionsIngress
       Resource: ["arn:aws:ec2:*:*:security-group/*"]
+
     - Effect: "Allow"
       Action:
         - ec2:DescribeSecurityGroups
