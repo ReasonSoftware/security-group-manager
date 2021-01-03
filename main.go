@@ -69,7 +69,7 @@ func init() {
 }
 
 func handler() {
-	log.Info("security-group-manager v1.0.1")
+	log.Info("security-group-manager v1.0.2")
 
 	if err := Config.Run(Cli); err != nil {
 		log.Fatal(err)

@@ -1,3 +1,7 @@
+## [1.0.2](https://github.com/ReasonSoftware/security-group-manager/releases/tag/v1.0.2) - 2021-01-03
+### Changed
+- Upgrade dependencies
+
 ## [1.0.1](https://github.com/ReasonSoftware/security-group-manager/releases/tag/v1.0.1) - 2020-10-11
 ### Changed
 - Upgrade GoLang to 1.15

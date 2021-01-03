@@ -32,8 +32,6 @@ $(GO_LINTER):
 
 .PHONY: release
 release: test
-	@rm -f ./$(BINARY)
-	@mkdir -p release
 	@GOOS=linux GOARCH=amd64 go build -o $(BINARY)
 	serverless deploy --stage prod
 
