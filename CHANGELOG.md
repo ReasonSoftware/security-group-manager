@@ -1,3 +1,8 @@
+## [1.1.0](https://github.com/ReasonSoftware/security-group-manager/releases/tag/v1.1.0) - 2021-01-05
+### Added
+- Variable `OPERATIONAL_REGION` to contain an AWS region with a target Security Group
+- Variable `SECRET_REGION` to contain an AWS region with a source **whitelist** Secret (*Secrets Manager*)
+
 ## [1.0.2](https://github.com/ReasonSoftware/security-group-manager/releases/tag/v1.0.2) - 2021-01-03
 ### Changed
 - Upgrade dependencies

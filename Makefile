@@ -1,13 +1,14 @@
-# global
-BINARY := $(notdir $(CURDIR))
 GO_BIN_DIR := $(GOPATH)/bin
 
-# unit tests
 test: lint
 	@echo "unit testing..."
 	@go test -v $$(go list ./... | grep -v vendor | grep -v mocks) -race -coverprofile=coverage.txt -covermode=atomic
 
-# lint
+GO_LINTER := $(GO_BIN_DIR)/golangci-lint
+$(GO_LINTER):
+	@echo "installing linter..."
+	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+
 .PHONY: lint
 lint: $(GO_LINTER)
 	@echo "vendoring..."
@@ -15,25 +16,6 @@ lint: $(GO_LINTER)
 	@go mod tidy
 	@echo "linting..."
 	@golangci-lint run ./...
-
-# initialize
-.PHONY: init
-init:
-	@rm -f go.mod
-	@rm -f go.sum
-	@rm -rf ./vendor
-	@go mod init $$(pwd | awk -F'/' '{print "github.com/"$$(NF-1)"/"$$NF}')
-
-# linter
-GO_LINTER := $(GO_BIN_DIR)/golangci-lint
-$(GO_LINTER):
-	@echo "installing linter..."
-	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-
-.PHONY: release
-release: test
-	@GOOS=linux GOARCH=amd64 go build -o $(BINARY)
-	serverless deploy --stage prod
 
 .PHONY: codecov
 codecov: test

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
@@ -43,9 +44,18 @@ func init() {
 	}
 
 	// validate input
-	if os.Getenv("AWS_REGION") == "" {
-		log.Warn("env.var 'AWS_REGION' is not set, assuming 'us-east-1'")
-		os.Setenv("AWS_REGION", "us-east-1")
+	ec2Region := "us-east-1"
+	smRegion := "us-east-1"
+	if os.Getenv("OPERATIONAL_REGION") != "" {
+		ec2Region = os.Getenv("OPERATIONAL_REGION")
+	} else {
+		log.Warn("env.var 'OPERATIONAL_REGION' is not set, assuming 'us-east-1'")
+	}
+
+	if os.Getenv("SECRET_REGION") != "" {
+		smRegion = os.Getenv("SECRET_REGION")
+	} else {
+		log.Warn("env.var 'SECRET_REGION' is not set, assuming 'us-east-1'")
 	}
 
 	if os.Getenv("SECRET") == "" {
@@ -55,9 +65,12 @@ func init() {
 	Secret = os.Getenv("SECRET")
 
 	// define clients
-	s := session.Must(session.NewSession())
-	Cli = ec2.New(s)
-	SCli = secretsmanager.New(s)
+	Cli = ec2.New(session.Must(session.NewSession(&aws.Config{
+		Region: &ec2Region,
+	})))
+	SCli = secretsmanager.New(session.Must(session.NewSession(&aws.Config{
+		Region: &smRegion,
+	})))
 
 	// get initial config
 	log.Debug("fetching configuration")
@@ -69,7 +82,7 @@ func init() {
 }
 
 func handler() {
-	log.Info("security-group-manager v1.0.2")
+	log.Info("security-group-manager v1.1.0")
 
 	if err := Config.Run(Cli); err != nil {
 		log.Fatal(err)

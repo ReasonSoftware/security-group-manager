@@ -89,6 +89,8 @@ Tag a security group with `<protocol-name>=managed` that matches of the protocol
 
     - `DEBUG=true` - Enable verbose logs
     - `LOCAL=true` - Toggle to execute outside of AWS Lambda environment (useful during local development)
+    - `OPERATIONAL_REGION=<region>` - Region in which lambda should manage the security groups. This allows to manage multiple regions from multiple lambdas deployed in a single region (default: `us-east-1`)
+    - `SECRET_REGION=<region>` - **Secrets Manager** region in which a *whitelist* secret is created. Allows to maintain a single *source of truth* for lambdas deployed in multiple regions (default: `us-east-1`)
 
     </details>
 
