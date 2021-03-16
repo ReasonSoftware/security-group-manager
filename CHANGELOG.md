@@ -1,3 +1,8 @@
+## [1.1.1](https://github.com/ReasonSoftware/security-group-manager/releases/tag/v1.1.0) - 2021-01-05
+### Changed
+- Upgrade dependencies
+- When maximum number of rules per security group has been reached, produce an error log and continue to other security groups
+
 ## [1.1.0](https://github.com/ReasonSoftware/security-group-manager/releases/tag/v1.1.0) - 2021-01-05
 ### Added
 - Variable `OPERATIONAL_REGION` to contain an AWS region with a target Security Group

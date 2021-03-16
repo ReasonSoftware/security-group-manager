@@ -100,7 +100,12 @@ func (c *Config) manage(cli sg.Client, log *logger.Entry, name string, proto *Pr
 		if err != nil && strings.Contains(err.Error(), "already exists") {
 			log.Errorf("duplicate error: cidr '%s' already exist as a not managed rule on requested security group", *rule.Permissions[0].IpRanges[0].CidrIp)
 		} else if err != nil {
-			log.Fatal(errors.Wrap(err, fmt.Sprintf("error adding a cidr '%s' to a security group", *rule.Permissions[0].IpRanges[0].CidrIp)))
+			if strings.Contains(err.Error(), "RulesPerSecurityGroupLimitExceeded") {
+				log.Error("the maximum number of rules per security group has been reached")
+				break
+			} else {
+				log.Fatal(errors.Wrap(err, fmt.Sprintf("error adding a cidr '%s' to a security group", *rule.Permissions[0].IpRanges[0].CidrIp)))
+			}
 		}
 	}
 
