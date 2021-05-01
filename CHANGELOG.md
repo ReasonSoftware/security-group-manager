@@ -1,3 +1,7 @@
+## [1.1.2](https://github.com/ReasonSoftware/security-group-manager/releases/tag/v1.1.2) - 2021-05-01
+### Changed
+- Upgrade dependencies
+
 ## [1.1.1](https://github.com/ReasonSoftware/security-group-manager/releases/tag/v1.1.0) - 2021-01-05
 ### Changed
 - Upgrade dependencies
