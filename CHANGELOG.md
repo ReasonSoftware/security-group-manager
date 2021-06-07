@@ -1,4 +1,4 @@
-# [1.1.3] - 2021-06-02
+## [1.1.3] - 2021-06-02
 ### Changed
 - Upgrade dependencies
 
