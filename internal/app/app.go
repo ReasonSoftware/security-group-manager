@@ -14,7 +14,7 @@ import (
 )
 
 // Version contains current application version
-const Version string = "1.1.3"
+const Version string = "1.1.4"
 
 // Catalog contains rule groups by types
 type Catalog struct {

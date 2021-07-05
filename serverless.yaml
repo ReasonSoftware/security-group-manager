@@ -6,6 +6,7 @@ provider:
   runtime: go1.x
   timeout: 240
   memorySize: 128
+  lambdaHashingVersion: "20201221"
 
   stage: prod
   environment:
@@ -13,23 +14,25 @@ provider:
     DEBUG: "false"
     LOCAL: "false"
 
-  iamRoleStatements:
-    - Effect: "Allow"
-      Action:
-        - secretsmanager:GetSecretValue
-      Resource: ["arn:aws:secretsmanager:*:*:secret:whitelist-*"]
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - secretsmanager:GetSecretValue
+          Resource: ["arn:aws:secretsmanager:*:*:secret:whitelist-*"]
 
-    - Effect: "Allow"
-      Action:
-        - ec2:RevokeSecurityGroupIngress
-        - ec2:AuthorizeSecurityGroupIngress
-        - ec2:UpdateSecurityGroupRuleDescriptionsIngress
-      Resource: ["arn:aws:ec2:*:*:security-group/*"]
+        - Effect: "Allow"
+          Action:
+            - ec2:RevokeSecurityGroupIngress
+            - ec2:AuthorizeSecurityGroupIngress
+            - ec2:UpdateSecurityGroupRuleDescriptionsIngress
+          Resource: ["arn:aws:ec2:*:*:security-group/*"]
 
-    - Effect: "Allow"
-      Action:
-        - ec2:DescribeSecurityGroups
-      Resource: ["*"]
+        - Effect: "Allow"
+          Action:
+            - ec2:DescribeSecurityGroups
+          Resource: ["*"]
 
 functions:
   app:
@@ -38,7 +41,5 @@ functions:
       - schedule: cron(0/30 * * * ? *)
 
 package:
-  exclude:
-    - ./**
-  include:
+  patterns:
     - ./security-group-manager

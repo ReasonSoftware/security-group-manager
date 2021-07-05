@@ -1,3 +1,7 @@
+## [1.1.4] - 2021-07-05
+### Changed
+- Upgrade dependencies
+
 ## [1.1.3] - 2021-06-02
 ### Changed
 - Upgrade dependencies
@@ -28,6 +32,7 @@
 ## [1.0.0] - 2020-05-06
 - First release.
 
+[1.1.4]: https://github.com/ReasonSoftware/security-group-manager/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/ReasonSoftware/security-group-manager/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/ReasonSoftware/security-group-manager/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/ReasonSoftware/security-group-manager/compare/v1.1.0...v1.1.1
