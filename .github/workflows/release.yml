@@ -5,8 +5,8 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+
 
 jobs:
-  release:
-    name: Release
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - name: Init
@@ -35,6 +35,47 @@ jobs:
 
       - name: Test
         run: go test -v $(go list ./... | grep -v vendor | grep -v mocks) -race -coverprofile=coverage.txt -covermode=atomic
+
+  scan:
+    name: Security scan
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          languages: go
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v1
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [ scan ]
+    steps:
+      - name: Init
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.16
+        id: go
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          go get -v -t -d ./...
+          if [ -f Gopkg.toml ]; then
+          curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+          dep ensure
+          fi
 
       - name: Build
         run: GOOS=linux GOARCH=amd64 go build -o security-group-manager
