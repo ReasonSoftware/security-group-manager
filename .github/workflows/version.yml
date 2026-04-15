@@ -20,7 +20,7 @@ jobs:
         env:
           NEW_VERSION: ${{ github.event.inputs.version }}
         run: |
-          sed -i "s/Version string = \".*\"/Version string = \"$NEW_VERSION\"/g" internal/app/app.go
+          sed -i "s/Version string = \".*\"/Version string = \"$NEW_VERSION\"/g" main.go
           sed -i "s/## \[Unreleased\]/## [Unreleased]\n\n## [${NEW_VERSION#v}] - $(date +%Y-%m-%d)/" CHANGELOG.md
 
       - name: Commit & Tag

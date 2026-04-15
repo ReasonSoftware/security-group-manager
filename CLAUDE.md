@@ -32,7 +32,7 @@ make codecov  # open coverage report in browser
 
 ## Conventions
 
-- Version is stored as `Version string` constant in `internal/app/app.go`
+- Version is stored as `Version string` constant in `main.go`
 - Lambda detection: checks `AWS_LAMBDA_FUNCTION_NAME` env var
 - Logging: logrus with JSON formatter, no timestamps (CloudWatch adds them)
 - Architecture: arm64 (Graviton) for cost savings
@@ -56,7 +56,7 @@ Both deployments read the same `whitelist` secret from us-east-1 at runtime (via
 1. Add entries under `## [Unreleased]` in CHANGELOG.md (keepachangelog format with brackets)
 2. Commit and push to master
 3. Trigger `version.yml` workflow: `gh workflow run version.yml -f version=vX.Y.Z`
-4. Workflow updates `internal/app/app.go` version, renames `[Unreleased]` → `[X.Y.Z] - YYYY-MM-DD`, tags and pushes
+4. Workflow updates `main.go` version, renames `[Unreleased]` → `[X.Y.Z] - YYYY-MM-DD`, tags and pushes
 5. Tag push triggers `release.yml` which creates a GitHub release
 6. **Pull locally after version release** — the version workflow pushes commits: `git pull`
 

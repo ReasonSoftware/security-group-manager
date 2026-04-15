@@ -15,6 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const Version string = "1.1.4"
+
 // Cli is an authorized EC2 Client
 var Cli *ec2.EC2
 
@@ -71,7 +73,7 @@ func parseLogLevel(level string) logrus.Level {
 }
 
 func handler(ctx context.Context) error {
-	log := logrus.WithField("version", app.Version)
+	log := logrus.WithField("version", Version)
 	log.Info("starting")
 
 	config, err := app.GetConfig(SCli, Secret)

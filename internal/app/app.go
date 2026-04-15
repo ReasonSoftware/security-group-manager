@@ -13,9 +13,6 @@ import (
 	"github.com/ReasonSoftware/security-group-manager/pkg/sg"
 )
 
-// Version contains current application version
-const Version string = "1.1.4"
-
 // Catalog contains rule groups by types
 type Catalog struct {
 	Correct   *Group
