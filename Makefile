@@ -15,4 +15,4 @@ codecov: test
 	@go tool cover -html=coverage.txt
 
 run:
-	go run .
+	@go run .
