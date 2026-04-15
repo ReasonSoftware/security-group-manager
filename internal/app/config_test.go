@@ -17,9 +17,12 @@ const secret string = "secret"
 func TestGetConfig(t *testing.T) {
 	assert := assert.New(t)
 
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId:     aws.String(secret),
+		VersionStage: aws.String("AWSCURRENT"),
+	}
+
 	type test struct {
-		Parameter      string
-		MockInput      *secretsmanager.GetSecretValueInput
 		MockOutput     *secretsmanager.GetSecretValueOutput
 		MockError      error
 		ExpectedError  string
@@ -28,11 +31,6 @@ func TestGetConfig(t *testing.T) {
 
 	suite := map[string]test{
 		"Success": {
-			Parameter: secret,
-			MockInput: &secretsmanager.GetSecretValueInput{
-				SecretId:     aws.String(secret),
-				VersionStage: aws.String("AWSCURRENT"),
-			},
 			MockOutput: &secretsmanager.GetSecretValueOutput{
 				SecretString: aws.String(`{
 	"protocols": {
@@ -63,128 +61,77 @@ func TestGetConfig(t *testing.T) {
 			ExpectedError: "",
 			ExpectedOutput: &app.Config{
 				Protocols: map[string]*app.Protocol{
-					"http": &app.Protocol{
+					"http": {
 						Transport: aws.String("tcp"),
 						FromPort:  aws.Int64(80),
 						ToPort:    aws.Int64(80),
 					},
-					"https": &app.Protocol{
+					"https": {
 						Transport: aws.String("tcp"),
 						FromPort:  aws.Int64(443),
 						ToPort:    aws.Int64(443),
 					},
 				},
 				Rules: []*app.Rule{
-					{
-						CIDR: aws.String("10.0.0.0/16"),
-					},
-					{
-						CIDR: aws.String("192.168.0.0/16"),
-					},
+					{CIDR: aws.String("10.0.0.0/16")},
+					{CIDR: aws.String("192.168.0.0/16")},
 				},
 			},
 		},
-		"Failure": {
-			Parameter: secret,
-			MockInput: &secretsmanager.GetSecretValueInput{
-				SecretId:     aws.String(secret),
-				VersionStage: aws.String("AWSCURRENT"),
-			},
+		"Secrets Manager API Failure": {
 			MockOutput:     &secretsmanager.GetSecretValueOutput{},
 			MockError:      errors.New("reason"),
 			ExpectedError:  "error fetching secret: reason",
 			ExpectedOutput: &app.Config{},
 		},
-		"Invalid JSON": {
-			Parameter: secret,
-			MockInput: &secretsmanager.GetSecretValueInput{
-				SecretId:     aws.String(secret),
-				VersionStage: aws.String("AWSCURRENT"),
-			},
-			MockOutput: &secretsmanager.GetSecretValueOutput{
-				SecretString: aws.String(`{
-	"protocols": {
-		"http": {
-			"transport": "tcp",
-			"from_port": 80,
-			"to_port": 80
+		"Nil SecretString (binary secret)": {
+			MockOutput:     &secretsmanager.GetSecretValueOutput{SecretString: nil},
+			MockError:      nil,
+			ExpectedError:  "secret has no SecretString payload (binary secrets are not supported)",
+			ExpectedOutput: &app.Config{},
 		},
-	},
-	"rules": [
-		{
-			"cidr": "10.0.0.0/16",
-			"note": "New Jersey Office"
-	]
-}`),
+		"Invalid JSON": {
+			MockOutput: &secretsmanager.GetSecretValueOutput{
+				SecretString: aws.String(`{invalid json`),
 			},
 			MockError:      nil,
-			ExpectedError:  "error parsing secret: invalid character '}' looking for beginning of object key string",
+			ExpectedError:  "error parsing secret: invalid character 'i' looking for beginning of object key string",
 			ExpectedOutput: &app.Config{},
 		},
 		"Empty Protocols Section": {
-			Parameter: secret,
-			MockInput: &secretsmanager.GetSecretValueInput{
-				SecretId:     aws.String(secret),
-				VersionStage: aws.String("AWSCURRENT"),
-			},
 			MockOutput: &secretsmanager.GetSecretValueOutput{
-				SecretString: aws.String(`{
-	"rules": [
-		{
-			"cidr": "10.0.0.0/16",
-			"note": "New Jersey Office"
-		},
-		{
-			"cidr": "192.168.0.0/16",
-			"note": "London Office"
-		}
-	]
-}`),
+				SecretString: aws.String(`{"rules":[{"cidr":"10.0.0.0/16"}]}`),
 			},
-			MockError:      errors.New("malformed secret"),
-			ExpectedError:  "error fetching secret: malformed secret",
+			MockError:      nil,
+			ExpectedError:  "malformed secret",
 			ExpectedOutput: &app.Config{},
 		},
 		"Empty Rules Section": {
-			Parameter: secret,
-			MockInput: &secretsmanager.GetSecretValueInput{
-				SecretId:     aws.String(secret),
-				VersionStage: aws.String("AWSCURRENT"),
-			},
 			MockOutput: &secretsmanager.GetSecretValueOutput{
-				SecretString: aws.String(`{
-	"protocols": {
-		"http": {
-			"transport": "tcp",
-			"from_port": 80,
-			"to_port": 80
-		},
-	}
-}`),
+				SecretString: aws.String(`{"protocols":{"http":{"transport":"tcp","from_port":80,"to_port":80}}}`),
 			},
-			MockError:      errors.New("malformed secret"),
-			ExpectedError:  "error fetching secret: malformed secret",
+			MockError:      nil,
+			ExpectedError:  "malformed secret",
 			ExpectedOutput: &app.Config{},
 		},
 	}
 
 	var counter int
-	for name, test := range suite {
+	for name, tc := range suite {
 		counter++
 		t.Logf("Test Case %v/%v - %s", counter, len(suite), name)
 
 		m := new(mocks.SM)
+		m.On("GetSecretValue", input).Return(tc.MockOutput, tc.MockError).Once()
 
-		m.On("GetSecretValue", test.MockInput).Return(test.MockOutput, test.MockError).Once()
+		result, err := app.GetConfig(m, secret)
 
-		result, err := app.GetConfig(m, test.Parameter)
-
-		if test.ExpectedError != "" {
-			assert.EqualError(err, test.ExpectedError)
+		if tc.ExpectedError != "" {
+			assert.EqualError(err, tc.ExpectedError)
 		} else {
-			assert.Equal(nil, err)
+			assert.NoError(err)
 		}
 
-		assert.Equal(test.ExpectedOutput, result)
+		assert.Equal(tc.ExpectedOutput, result)
 	}
 }

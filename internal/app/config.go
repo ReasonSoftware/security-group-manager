@@ -5,11 +5,12 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
-
 	"github.com/pkg/errors"
 )
 
-// GetConfig returns parsed Configuration
+// GetConfig returns parsed Configuration from AWS Secrets Manager.
+// The secret is fetched on every Lambda invocation so IP changes
+// propagate within one cron cycle without requiring a redeploy.
 func GetConfig(cli Client, secret string) (*Config, error) {
 	o, err := cli.GetSecretValue(&secretsmanager.GetSecretValueInput{
 		SecretId:     aws.String(secret),
@@ -19,9 +20,12 @@ func GetConfig(cli Client, secret string) (*Config, error) {
 		return new(Config), errors.Wrap(err, "error fetching secret")
 	}
 
+	if o.SecretString == nil {
+		return new(Config), errors.New("secret has no SecretString payload (binary secrets are not supported)")
+	}
+
 	c := new(Config)
-	err = json.Unmarshal([]byte(*o.SecretString), &c)
-	if err != nil {
+	if err := json.Unmarshal([]byte(*o.SecretString), c); err != nil {
 		return new(Config), errors.Wrap(err, "error parsing secret")
 	}
 

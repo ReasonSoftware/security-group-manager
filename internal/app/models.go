@@ -18,7 +18,7 @@ type Config struct {
 	Rules     []*Rule              `json:"rules"`
 }
 
-// Protocol represends a single protocol configuration
+// Protocol represents a single protocol configuration
 type Protocol struct {
 	Transport *string `json:"transport"`
 	FromPort  *int64  `json:"from_port"`

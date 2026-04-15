@@ -1,22 +1,18 @@
-GO_BIN_DIR := $(GOPATH)/bin
+.DEFAULT_GOAL := test
 
-test: lint
-	@echo "unit testing..."
-	@go test -v $$(go list ./... | grep -v vendor | grep -v mocks) -race -coverprofile=coverage.txt -covermode=atomic
+.PHONY: vendor lint test codecov run
 
-GO_LINTER := $(GO_BIN_DIR)/golangci-lint
-$(GO_LINTER):
-	@echo "installing linter..."
-	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-
-.PHONY: lint
-lint: $(GO_LINTER)
-	@echo "vendoring..."
+vendor:
 	@go mod vendor
-	@go mod tidy
-	@echo "linting..."
+
+lint: vendor
 	@golangci-lint run ./...
 
-.PHONY: codecov
+test:
+	@go test ./... -count=1 -race -coverprofile=coverage.txt -covermode=atomic
+
 codecov: test
 	@go tool cover -html=coverage.txt
+
+run:
+	@go run .
