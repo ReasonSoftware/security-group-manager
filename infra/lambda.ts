@@ -2,9 +2,7 @@
 
 import { REPO_URL } from "./constants";
 
-export function createFunction({ secretValues }: {
-  secretValues: $util.Output<string>;
-}) {
+export function createFunction() {
   const region = aws.getRegionOutput();
 
   const fn = new sst.aws.Function("security-group-manager", {
@@ -19,11 +17,15 @@ export function createFunction({ secretValues }: {
     name: "security-group-manager",
     description: `Maintains whitelist rules on EC2 Security Groups. Repo: ${REPO_URL}`,
     environment: {
-      CONFIG: secretValues,
-      OPERATIONAL_REGION: region.name,
+      SECRET: "whitelist",
       SECRET_REGION: "us-east-1",
+      OPERATIONAL_REGION: region.name,
     },
     permissions: [
+      {
+        actions: ["secretsmanager:GetSecretValue"],
+        resources: ["arn:aws:secretsmanager:us-east-1:*:secret:whitelist-*"],
+      },
       {
         actions: [
           "ec2:RevokeSecurityGroupIngress",

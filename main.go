@@ -11,14 +11,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/sirupsen/logrus"
 )
 
 // Cli is an authorized EC2 Client
 var Cli *ec2.EC2
 
-// Config contains parsed configuration
-var Config *app.Config
+// SCli is an authorized Secrets Manager Client
+var SCli *secretsmanager.SecretsManager
+
+// Secret contains the name of the AWS Secrets Manager secret with runtime config
+var Secret string
 
 func init() {
 	logrus.SetReportCaller(false)
@@ -34,15 +38,23 @@ func init() {
 		logrus.Warn("env.var 'OPERATIONAL_REGION' is not set, assuming 'us-east-1'")
 	}
 
+	smRegion := os.Getenv("SECRET_REGION")
+	if smRegion == "" {
+		smRegion = "us-east-1"
+		logrus.Warn("env.var 'SECRET_REGION' is not set, assuming 'us-east-1'")
+	}
+
+	Secret = os.Getenv("SECRET")
+	if Secret == "" {
+		logrus.Fatal("SECRET environment variable is required")
+	}
+
 	Cli = ec2.New(session.Must(session.NewSession(&aws.Config{
 		Region: &ec2Region,
 	})))
-
-	var err error
-	Config, err = app.GetConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	SCli = secretsmanager.New(session.Must(session.NewSession(&aws.Config{
+		Region: &smRegion,
+	})))
 }
 
 func parseLogLevel(level string) logrus.Level {
@@ -62,7 +74,13 @@ func handler(ctx context.Context) error {
 	log := logrus.WithField("version", app.Version)
 	log.Info("starting")
 
-	if err := Config.Run(Cli); err != nil {
+	config, err := app.GetConfig(SCli, Secret)
+	if err != nil {
+		log.WithError(err).Error("error fetching configuration")
+		return err
+	}
+
+	if err := config.Run(Cli); err != nil {
 		log.WithError(err).Error("config run failed")
 		return err
 	}

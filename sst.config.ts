@@ -1,6 +1,6 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
-// Stage-to-region mapping. The secret is always read from us-east-1
+// Stage-to-region mapping. The whitelist secret always lives in us-east-1
 // (single source of truth), but the Lambda is deployed to the target region
 // where it manages security groups.
 const STAGE_REGIONS: Record<string, "us-east-1" | "us-west-2"> = {
@@ -37,13 +37,11 @@ export default $config({
     };
   },
   async run() {
-    const { fetchSecrets } = await import("./infra/secrets");
     const { createFunction } = await import("./infra/lambda");
     const { createAlarms } = await import("./infra/alarms");
     const { createCron } = await import("./infra/cron");
 
-    const { secretValues } = fetchSecrets();
-    const { fn } = createFunction({ secretValues });
+    const { fn } = createFunction();
     createAlarms({ fn });
     createCron({ fn });
   },

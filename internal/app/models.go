@@ -1,5 +1,7 @@
 package app
 
+import "github.com/aws/aws-sdk-go/service/secretsmanager"
+
 // TagProtocolValue should match this value in order to indicate that
 // a certain protocol should be managed on tagged security group.
 // In any case, only "owned" rules will be managed.
@@ -26,4 +28,9 @@ type Protocol struct {
 // Rule represents a whitelisted CIDR
 type Rule struct {
 	CIDR *string `json:"cidr"`
+}
+
+// Client represents a Secrets Manager client
+type Client interface {
+	GetSecretValue(*secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error)
 }

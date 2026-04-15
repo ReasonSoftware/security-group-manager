@@ -36,10 +36,11 @@ make codecov  # open coverage report in browser
 - Lambda detection: checks `AWS_LAMBDA_FUNCTION_NAME` env var
 - Logging: logrus with JSON formatter, no timestamps (CloudWatch adds them)
 - Architecture: arm64 (Graviton) for cost savings
-- Environment variables (injected from Secrets Manager at deploy time):
-  - `CONFIG` — full whitelist config JSON
-  - `OPERATIONAL_REGION` — target region for SG management (set per-deployment)
+- Environment variables:
+  - `SECRET` — name of the Secrets Manager secret with the whitelist (always `whitelist`)
   - `SECRET_REGION` — region where `whitelist` secret lives (always `us-east-1`)
+  - `OPERATIONAL_REGION` — target region for SG management (set per-deployment from Pulumi `aws.getRegion()`)
+- **Secret is fetched at runtime on every Lambda invocation** — IP changes to the whitelist propagate within one 30-min cron cycle without needing a redeploy
 
 ## Deployment
 
@@ -48,7 +49,7 @@ sst deploy --stage us-east-1    # Deploy Lambda to us-east-1
 sst deploy --stage us-west-2    # Deploy Lambda to us-west-2
 ```
 
-Both deployments read the same `whitelist` secret from us-east-1 via a cross-region Pulumi Provider.
+Both deployments read the same `whitelist` secret from us-east-1 at runtime (via `SECRET_REGION=us-east-1` env var).
 
 ## Release Workflow
 
