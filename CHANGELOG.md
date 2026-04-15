@@ -1,3 +1,25 @@
+## [Unreleased]
+
+### Changed
+
+- Migrate from Serverless Framework to SST v3 (Ion)
+- Upgrade Go to 1.24 and switch runtime from `go1.x` to `provided.al2023` (arm64)
+- Replace stdlib/text-formatted logrus with JSON-structured logrus logging
+- Use `AWS_LAMBDA_FUNCTION_NAME` for Lambda detection instead of `LOCAL` env var
+- Handler now accepts `context.Context` and returns `error`
+- Inject whitelist config as Lambda env var (`CONFIG`) at deploy time instead of runtime Secrets Manager fetch
+- Stage-based multi-region deployment (`sst deploy --stage us-east-1` / `--stage us-west-2`)
+- Add `.golangci.yml` linter configuration
+- Add `.editorconfig` for consistent formatting
+- Add CloudWatch alarms for errors and throttles via Pulumi
+- Add EventBridge cron schedule via `sst.aws.Cron`
+
+### Removed
+
+- `serverless.yaml` (replaced by `sst.config.ts` and `infra/` directory)
+- `mocks/sm.go` (Secrets Manager mock no longer needed — config comes from env var)
+- `SECRET` env var (secret content is injected directly as `CONFIG`)
+
 ## [1.1.4] - 2021-07-05
 ### Changed
 - Upgrade dependencies

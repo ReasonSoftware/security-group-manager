@@ -2,31 +2,25 @@ package app
 
 import (
 	"encoding/json"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"os"
 
 	"github.com/pkg/errors"
 )
 
-// GetConfig returns parsed Configuration
-func GetConfig(cli Client, secret string) (*Config, error) {
-	o, err := cli.GetSecretValue(&secretsmanager.GetSecretValueInput{
-		SecretId:     aws.String(secret),
-		VersionStage: aws.String("AWSCURRENT"),
-	})
-	if err != nil {
-		return new(Config), errors.Wrap(err, "error fetching secret")
+// GetConfig returns parsed Configuration from the CONFIG environment variable
+func GetConfig() (*Config, error) {
+	raw := os.Getenv("CONFIG")
+	if raw == "" {
+		return new(Config), errors.New("CONFIG environment variable is required")
 	}
 
 	c := new(Config)
-	err = json.Unmarshal([]byte(*o.SecretString), &c)
-	if err != nil {
-		return new(Config), errors.Wrap(err, "error parsing secret")
+	if err := json.Unmarshal([]byte(raw), c); err != nil {
+		return new(Config), errors.Wrap(err, "error parsing CONFIG")
 	}
 
 	if len(c.Protocols) == 0 || len(c.Rules) == 0 {
-		return new(Config), errors.New("malformed secret")
+		return new(Config), errors.New("malformed configuration")
 	}
 
 	return c, nil

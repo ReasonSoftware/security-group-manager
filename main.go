@@ -1,100 +1,83 @@
 package main
 
 import (
+	"context"
 	"os"
 	"strings"
+
+	"github.com/ReasonSoftware/security-group-manager/internal/app"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	log "github.com/sirupsen/logrus"
-
-	"github.com/ReasonSoftware/security-group-manager/internal/app"
+	"github.com/sirupsen/logrus"
 )
 
 // Cli is an authorized EC2 Client
 var Cli *ec2.EC2
 
-// SCli is an authorized Secrets Run Client
-var SCli *secretsmanager.SecretsManager
-
 // Config contains parsed configuration
 var Config *app.Config
 
-// Secret contains a name of an aws secret containing a runtime config
-var Secret string
-
 func init() {
-	// define logger
-	log.SetReportCaller(false)
-	log.SetFormatter(&log.TextFormatter{
-		ForceColors:            false,
-		FullTimestamp:          true,
-		DisableLevelTruncation: true,
-		DisableTimestamp:       true,
+	logrus.SetReportCaller(false)
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		DisableTimestamp: true,
 	})
-	log.SetOutput(os.Stdout)
-	if strings.ToLower(os.Getenv("DEBUG")) == "true" {
-		log.SetLevel(log.DebugLevel)
-		log.Warn("starting in debug mode")
-	} else {
-		log.SetLevel(log.InfoLevel)
+	logrus.SetOutput(os.Stdout)
+	logrus.SetLevel(parseLogLevel(os.Getenv("LOG_LEVEL")))
+
+	ec2Region := os.Getenv("OPERATIONAL_REGION")
+	if ec2Region == "" {
+		ec2Region = "us-east-1"
+		logrus.Warn("env.var 'OPERATIONAL_REGION' is not set, assuming 'us-east-1'")
 	}
 
-	// validate input
-	ec2Region := "us-east-1"
-	smRegion := "us-east-1"
-	if os.Getenv("OPERATIONAL_REGION") != "" {
-		ec2Region = os.Getenv("OPERATIONAL_REGION")
-	} else {
-		log.Warn("env.var 'OPERATIONAL_REGION' is not set, assuming 'us-east-1'")
-	}
-
-	if os.Getenv("SECRET_REGION") != "" {
-		smRegion = os.Getenv("SECRET_REGION")
-	} else {
-		log.Warn("env.var 'SECRET_REGION' is not set, assuming 'us-east-1'")
-	}
-
-	if os.Getenv("SECRET") == "" {
-		log.Fatal("missing aws secret name with configuration")
-	}
-
-	Secret = os.Getenv("SECRET")
-
-	// define clients
 	Cli = ec2.New(session.Must(session.NewSession(&aws.Config{
 		Region: &ec2Region,
 	})))
-	SCli = secretsmanager.New(session.Must(session.NewSession(&aws.Config{
-		Region: &smRegion,
-	})))
 
-	// get initial config
-	log.Debug("fetching configuration")
 	var err error
-	Config, err = app.GetConfig(SCli, Secret)
+	Config, err = app.GetConfig()
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 }
 
-func handler() {
-	log.Infof("security-group-manager v%v", app.Version)
+func parseLogLevel(level string) logrus.Level {
+	switch strings.ToLower(level) {
+	case "debug":
+		return logrus.DebugLevel
+	case "warn", "warning":
+		return logrus.WarnLevel
+	case "error":
+		return logrus.ErrorLevel
+	default:
+		return logrus.InfoLevel
+	}
+}
+
+func handler(ctx context.Context) error {
+	log := logrus.WithField("version", app.Version)
+	log.Info("starting")
 
 	if err := Config.Run(Cli); err != nil {
-		log.Fatal(err)
+		log.WithError(err).Error("config run failed")
+		return err
 	}
 
-	log.Info("security-group-manager finished")
+	log.Info("finished")
+
+	return nil
 }
 
 func main() {
-	if strings.ToLower(os.Getenv("LOCAL")) == "true" {
-		handler()
-	} else {
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
 		lambda.Start(handler)
+	} else {
+		if err := handler(context.Background()); err != nil {
+			logrus.WithError(err).Fatal("handler failed")
+		}
 	}
 }
