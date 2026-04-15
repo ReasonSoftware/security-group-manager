@@ -1,3 +1,9 @@
+## [2.0.1] - 2026-04-15
+
+### Changed
+
+- Trigger redeploy to pick up CodeBuild buildspec update that deploys to both us-east-1 and us-west-2
+
 ## [2.0.0] - 2026-04-15
 
 ### Changed
