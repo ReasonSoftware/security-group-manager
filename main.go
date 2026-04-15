@@ -15,7 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const Version string = "1.1.4"
+const Version string = "2.0.0"
 
 // Cli is an authorized EC2 Client
 var Cli *ec2.EC2
