@@ -16,6 +16,15 @@ jobs:
         with:
           token: ${{ secrets.MACHINE_GH_TOKEN }}
 
+      - name: Validate Version Format
+        env:
+          NEW_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          if ! echo "$NEW_VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Invalid version format: '$NEW_VERSION' — expected vX.Y.Z"
+            exit 1
+          fi
+
       - name: Update Version
         env:
           NEW_VERSION: ${{ github.event.inputs.version }}
@@ -29,7 +38,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
+          git add main.go CHANGELOG.md
           git commit -m "$NEW_VERSION"
           git tag "$NEW_VERSION"
           git push origin master --tags

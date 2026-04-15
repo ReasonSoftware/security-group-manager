@@ -3,6 +3,7 @@
 import { REPO_URL } from "./constants";
 
 export function createFunction() {
+  const identity = aws.getCallerIdentityOutput();
   const region = aws.getRegionOutput();
 
   const fn = new sst.aws.Function("security-group-manager", {
@@ -24,7 +25,9 @@ export function createFunction() {
     permissions: [
       {
         actions: ["secretsmanager:GetSecretValue"],
-        resources: ["arn:aws:secretsmanager:us-east-1:*:secret:whitelist-*"],
+        resources: [
+          $interpolate`arn:aws:secretsmanager:us-east-1:${identity.accountId}:secret:whitelist-*`,
+        ],
       },
       {
         actions: [
@@ -32,7 +35,9 @@ export function createFunction() {
           "ec2:AuthorizeSecurityGroupIngress",
           "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
         ],
-        resources: ["arn:aws:ec2:*:*:security-group/*"],
+        resources: [
+          $interpolate`arn:aws:ec2:${region.name}:${identity.accountId}:security-group/*`,
+        ],
       },
       {
         actions: ["ec2:DescribeSecurityGroups"],

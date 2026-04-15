@@ -9,7 +9,7 @@ export function createAlarms({ fn }: { fn: sst.aws.Function }) {
     metricName: "Errors",
     dimensions: { FunctionName: fn.name },
     statistic: "Sum",
-    period: 86400,
+    period: 60,
     evaluationPeriods: 1,
     threshold: 0,
     comparisonOperator: "GreaterThanThreshold",

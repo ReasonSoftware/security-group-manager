@@ -13,10 +13,12 @@ export default $config({
   app(input) {
     const region = STAGE_REGIONS[input?.stage ?? ""] ?? "us-east-1";
 
+    const isKnownStage = Object.keys(STAGE_REGIONS).includes(input?.stage ?? "");
+
     return {
       name: "security-group-manager",
-      removal: input?.stage === "production" ? "retain" : "remove",
-      protect: Object.keys(STAGE_REGIONS).includes(input?.stage ?? ""),
+      removal: isKnownStage ? "retain" : "remove",
+      protect: isKnownStage,
       home: "aws",
       providers: {
         aws: {

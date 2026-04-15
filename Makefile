@@ -15,4 +15,4 @@ codecov: test
 	@go tool cover -html=coverage.txt
 
 run:
-	@AWS_PROFILE=reason go run .
+	go run .

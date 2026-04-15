@@ -20,6 +20,10 @@ func GetConfig(cli Client, secret string) (*Config, error) {
 		return new(Config), errors.Wrap(err, "error fetching secret")
 	}
 
+	if o.SecretString == nil {
+		return new(Config), errors.New("secret has no SecretString payload (binary secrets are not supported)")
+	}
+
 	c := new(Config)
 	if err := json.Unmarshal([]byte(*o.SecretString), c); err != nil {
 		return new(Config), errors.Wrap(err, "error parsing secret")

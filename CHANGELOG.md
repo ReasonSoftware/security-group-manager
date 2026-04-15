@@ -14,6 +14,16 @@
 - Add CloudWatch alarms for errors and throttles via Pulumi
 - Add EventBridge cron schedule via `sst.aws.Cron`
 
+### Fixed
+
+- Replace `log.Fatal` in `app.go` with `return errors.Wrap` so EC2 errors propagate to Lambda runtime (enables proper CloudWatch Errors tracking)
+- Nil-check `o.SecretString` before dereference (prevents panic on binary-secret edge case)
+- Tighten IAM: scope Secrets Manager ARN to current account, scope EC2 ARN to current account + region
+- Fix errors alarm period from 86400s (1 day) to 60s so failures page within minutes, not the next day
+- `removal: retain` and `protect` now apply to `us-east-1` / `us-west-2` stages (not just `production`) so `sst remove --stage us-east-1` cannot accidentally nuke prod
+- Restore test cases for malformed secrets and invalid JSON (dropped during earlier refactor)
+- Validate version format in `version.yml` workflow before `sed` interpolation; stage specific files instead of `git add .`
+
 ### Removed
 
 - `serverless.yaml` (replaced by `sst.config.ts` and `infra/` directory)

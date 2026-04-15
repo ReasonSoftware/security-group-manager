@@ -17,9 +17,12 @@ const secret string = "secret"
 func TestGetConfig(t *testing.T) {
 	assert := assert.New(t)
 
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId:     aws.String(secret),
+		VersionStage: aws.String("AWSCURRENT"),
+	}
+
 	type test struct {
-		Parameter      string
-		MockInput      *secretsmanager.GetSecretValueInput
 		MockOutput     *secretsmanager.GetSecretValueOutput
 		MockError      error
 		ExpectedError  string
@@ -28,11 +31,6 @@ func TestGetConfig(t *testing.T) {
 
 	suite := map[string]test{
 		"Success": {
-			Parameter: secret,
-			MockInput: &secretsmanager.GetSecretValueInput{
-				SecretId:     aws.String(secret),
-				VersionStage: aws.String("AWSCURRENT"),
-			},
 			MockOutput: &secretsmanager.GetSecretValueOutput{
 				SecretString: aws.String(`{
 	"protocols": {
@@ -80,15 +78,40 @@ func TestGetConfig(t *testing.T) {
 				},
 			},
 		},
-		"Failure": {
-			Parameter: secret,
-			MockInput: &secretsmanager.GetSecretValueInput{
-				SecretId:     aws.String(secret),
-				VersionStage: aws.String("AWSCURRENT"),
-			},
+		"Secrets Manager API Failure": {
 			MockOutput:     &secretsmanager.GetSecretValueOutput{},
 			MockError:      errors.New("reason"),
 			ExpectedError:  "error fetching secret: reason",
+			ExpectedOutput: &app.Config{},
+		},
+		"Nil SecretString (binary secret)": {
+			MockOutput:     &secretsmanager.GetSecretValueOutput{SecretString: nil},
+			MockError:      nil,
+			ExpectedError:  "secret has no SecretString payload (binary secrets are not supported)",
+			ExpectedOutput: &app.Config{},
+		},
+		"Invalid JSON": {
+			MockOutput: &secretsmanager.GetSecretValueOutput{
+				SecretString: aws.String(`{invalid json`),
+			},
+			MockError:      nil,
+			ExpectedError:  "error parsing secret: invalid character 'i' looking for beginning of object key string",
+			ExpectedOutput: &app.Config{},
+		},
+		"Empty Protocols Section": {
+			MockOutput: &secretsmanager.GetSecretValueOutput{
+				SecretString: aws.String(`{"rules":[{"cidr":"10.0.0.0/16"}]}`),
+			},
+			MockError:      nil,
+			ExpectedError:  "malformed secret",
+			ExpectedOutput: &app.Config{},
+		},
+		"Empty Rules Section": {
+			MockOutput: &secretsmanager.GetSecretValueOutput{
+				SecretString: aws.String(`{"protocols":{"http":{"transport":"tcp","from_port":80,"to_port":80}}}`),
+			},
+			MockError:      nil,
+			ExpectedError:  "malformed secret",
 			ExpectedOutput: &app.Config{},
 		},
 	}
@@ -99,9 +122,9 @@ func TestGetConfig(t *testing.T) {
 		t.Logf("Test Case %v/%v - %s", counter, len(suite), name)
 
 		m := new(mocks.SM)
-		m.On("GetSecretValue", tc.MockInput).Return(tc.MockOutput, tc.MockError).Once()
+		m.On("GetSecretValue", input).Return(tc.MockOutput, tc.MockError).Once()
 
-		result, err := app.GetConfig(m, tc.Parameter)
+		result, err := app.GetConfig(m, secret)
 
 		if tc.ExpectedError != "" {
 			assert.EqualError(err, tc.ExpectedError)
